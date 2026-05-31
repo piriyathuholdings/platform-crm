@@ -1,6 +1,9 @@
 # Only backend + frontend belong in this repo
 *
 !.gitignore
+!docker-compose.yml
+!docker-compose.env.example
+!DEPLOY.md
 !fastapi-backend/
 !fastapi-backend/**
 !piriyathu-crm-next/
