@@ -1,0 +1,43 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Env & secrets
+.env
+.env.local
+.env.production
+migration.env
+
+# SQLite / local database
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# Build / test artifacts
+coverage/
+dist/
+playwright-report/
+test-results/
+
+# Legacy Frappe bench and local-only folders
+frappe-bench-2/
+backups/
+remote_ui_sync/

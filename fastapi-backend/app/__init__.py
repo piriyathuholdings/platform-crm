@@ -1,0 +1,1 @@
+"""FastAPI CRM backend package."""
