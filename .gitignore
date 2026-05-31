@@ -1,3 +1,11 @@
+# Only backend + frontend belong in this repo
+*
+!.gitignore
+!fastapi-backend/
+!fastapi-backend/**
+!piriyathu-crm-next/
+!piriyathu-crm-next/**
+
 # OS
 .DS_Store
 
@@ -37,7 +45,19 @@ dist/
 playwright-report/
 test-results/
 
-# Legacy Frappe bench and local-only folders
-frappe-bench-2/
-backups/
-remote_ui_sync/
+# Legacy Frappe migration scripts (local only, not part of this repo)
+fastapi-backend/consolidate_products.py
+fastapi-backend/migration_report.json
+fastapi-backend/migration/migrate_data.py
+fastapi-backend/migration/migrate_from_backup.py
+fastapi-backend/migration/migrate_production.py
+fastapi-backend/migration/manual_migration.py
+fastapi-backend/migration/monitor.py
+fastapi-backend/migration/rollback.py
+fastapi-backend/migration/validate_setup.py
+fastapi-backend/migration/test_logic.py
+fastapi-backend/migration/test_migration.py
+fastapi-backend/migration/update_deal_titles.py
+fastapi-backend/migration/check_deal_product.sh
+fastapi-backend/migration/test_deal_*.sh
+fastapi-backend/migration/test_product_*.sh
