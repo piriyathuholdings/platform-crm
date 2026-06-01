@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const FRAPPE_BASE_URL = process.env.FRAPPE_BASE_URL || "http://localhost:8000";
-const NEXTJS_ORIGIN = process.env.NEXTJS_ORIGIN || process.env.NEXT_PUBLIC_APP_ORIGIN || "http://127.0.0.1:3000";
+function frappeBaseUrl(): string {
+  return process.env["FRAPPE_BASE_URL"] || "http://127.0.0.1:9000";
+}
+
+function nextjsOrigin(): string {
+  return process.env["NEXTJS_ORIGIN"] || process.env["NEXT_PUBLIC_APP_ORIGIN"] || "http://127.0.0.1:3000";
+}
 
 type EntityKey =
   | "products"
@@ -1050,7 +1055,7 @@ function normalizeOrigin(value: string | null | undefined): string | null {
 function resolveProxyOrigin(req?: NextRequest): string {
   const requestOrigin = normalizeOrigin(req?.headers.get("origin"));
   if (requestOrigin) return requestOrigin;
-  return NEXTJS_ORIGIN;
+  return nextjsOrigin();
 }
 
 function parseServerMessages(payload: any): string | null {
@@ -1095,7 +1100,7 @@ async function frappeFetch(path: string, init: RequestInit = {}, req?: NextReque
   if (!headers.has("origin")) headers.set("origin", proxyOrigin);
   if (!headers.has("referer")) headers.set("referer", `${proxyOrigin}/`);
 
-  return fetch(`${FRAPPE_BASE_URL}${path}`, {
+  return fetch(`${frappeBaseUrl()}${path}`, {
     ...init,
     headers,
     redirect: "manual",
