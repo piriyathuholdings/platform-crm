@@ -4,6 +4,8 @@
 !docker-compose.yml
 !docker-compose.env.example
 !DEPLOY.md
+!scripts/
+!scripts/**
 !fastapi-backend/
 !fastapi-backend/**
 !piriyathu-crm-next/

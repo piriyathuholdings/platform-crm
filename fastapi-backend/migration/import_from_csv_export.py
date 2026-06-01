@@ -399,15 +399,13 @@ class CsvImporter:
             self.bump("Task")
 
     def import_notes(self, rows: Iterable[Dict[str, str]]) -> None:
-        from app.services.naming import assign_public_id, parse_suffix
-
         for row in rows:
             public_id = clean(row.get("name"))
             if not public_id:
                 continue
             content = clean(row.get("note_content")) or clean(row.get("content")) or ""
             note = Note(
-                name=public_id if parse_suffix(public_id, "NOTE-") is not None else None,
+                name=public_id,
                 title=clean(row.get("title")) or public_id,
                 content=content,
                 product_id=self.resolve_product_id(row.get("product")),
@@ -426,7 +424,6 @@ class CsvImporter:
                 created_at=parse_datetime(row.get("creation")),
                 updated_at=parse_datetime(row.get("modified")),
             )
-            assign_public_id(self.session, note)
             self.session.add(note)
             self.bump("Note")
 
@@ -578,8 +575,8 @@ def clear_database(db_path: Path) -> None:
     init_db()
 
 
-def wipe_all_rows(session: Session) -> None:
-    for model in (
+def wipe_all_rows(session: Session, *, keep_users: bool = False) -> None:
+    models = (
         Comment,
         ClientPayment,
         Expense,
@@ -592,8 +589,10 @@ def wipe_all_rows(session: Session) -> None:
         Organization,
         UserProductAccess,
         Product,
-        User,
-    ):
+    )
+    if not keep_users:
+        models = (*models, User)
+    for model in models:
         session.exec(delete(model))
     session.commit()
 
@@ -615,7 +614,12 @@ def main() -> None:
     parser.add_argument(
         "--reset-db",
         action="store_true",
-        help="Delete and recreate dev.db before import (default when run non-interactively)",
+        help="Delete and recreate dev.db before import",
+    )
+    parser.add_argument(
+        "--keep-users",
+        action="store_true",
+        help="When wiping data, preserve existing users and passwords",
     )
     args = parser.parse_args()
 
@@ -631,16 +635,28 @@ def main() -> None:
     else:
         print(f"No manifest found in {data_dir}; importing known doctypes in FK order")
 
-    db_path = Path(settings.database_url.replace("sqlite:///", ""))
-    if not db_path.is_absolute():
-        db_path = Path(__file__).resolve().parents[1] / db_path
-
-    print(f"Resetting database at {db_path}")
-    clear_database(db_path)
-
     engine = create_engine(settings.database_url)
+    is_sqlite = settings.database_url.startswith("sqlite")
+
+    if is_sqlite:
+        db_path = Path(settings.database_url.replace("sqlite:///", ""))
+        if not db_path.is_absolute():
+            db_path = Path(__file__).resolve().parents[1] / db_path
+        if args.reset_db or not db_path.exists():
+            print(f"Resetting database at {db_path}")
+            clear_database(db_path)
+        else:
+            print(f"Wiping rows in {db_path}")
+            with Session(engine) as session:
+                wipe_all_rows(session, keep_users=args.keep_users)
+    else:
+        print("Wiping CRM rows in database")
+        with Session(engine) as session:
+            wipe_all_rows(session, keep_users=args.keep_users)
+
     with Session(engine) as session:
-        seed_users(session)
+        if not args.keep_users:
+            seed_users(session)
         importer = CsvImporter(session, data_dir)
         for doctype in IMPORT_ORDER:
             importer.import_doctype(doctype)
