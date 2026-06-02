@@ -27,18 +27,44 @@
 - `JWT_SECRET_KEY` — long random secret
 - `NEXTJS_ORIGIN=https://crm.piriyathu.com`
 
-## Import existing CRM data
+## Backend
 
-1. Export production data (manifest JSON + per-doctype CSV files).
-2. Copy the export bundle into the **api** container.
-3. Run:
+The CRM backend is **FastAPI + Postgres** in `fastapi-backend/`. The Next.js app talks to it via `FRAPPE_BASE_URL` (legacy env name only — not Frappe ERP).
+
+`frappe_compat.py` is an HTTP compatibility layer so the existing Next.js `/api/v1` proxy keeps working; business logic lives in `app/services/crm.py` and `app/routers/crm.py`.
+
+**Coolify:** set `DATABASE_URL` on the **api** service (see `docker-compose.env.example`). Without it, the API falls back to SQLite inside the container.
+
+## Import / migrate CRM data
+
+### Recommended: Postgres dump (FastAPI database)
+
+Use this when moving between hosts or refreshing production from a running **platform-crm** Postgres instance (e.g. legacy app server `194.238.19.113`).
+
+On the **source** host:
 
 ```bash
-python migration/import_from_csv_export.py --data-dir /path/to/export --reset-db
-python seed_user.py
+# Find the postgres container, then:
+docker exec <postgres-container> pg_dump -U crm -Fc --no-acl --no-owner crm > platform-crm-$(date +%Y%m%d-%H%M%S).dump
 ```
 
-**Warning:** `--reset-db` wipes the target database. Run only once on a fresh Postgres volume.
+On the **target** host (backup production first):
+
+```bash
+docker exec -i <postgres-container> pg_restore -U crm -d crm --clean --if-exists --no-owner --role=crm < platform-crm-*.dump
+```
+
+Re-apply user passwords after restore if needed (`User` rows come from the dump).
+
+### Optional: CSV import (one-time legacy Frappe export)
+
+Only for old Frappe **CSV export bundles**, not for the current FastAPI stack:
+
+```bash
+python migration/import_from_csv_export.py --data-dir /path/to/export --keep-users
+```
+
+**Warning:** `--reset-db` wipes SQLite dev DB only; on Postgres it clears CRM tables before import.
 
 ## Local compose test
 
@@ -100,4 +126,4 @@ Re-run manual Coolify backups after schedule changes:
 docker exec coolify php artisan schedule:run-manual --type=backups --max=20
 ```
 
-**Not covered:** host-level Frappe MariaDB for `crm.piriyathu.com` (outside Coolify), Redis caches, stopped stacks.
+**Legacy:** Frappe bench on `194.238.19.113` (`/home/joseph/frappe-bench/sites/crm.piriyathu.com`) is deprecated for CRM; use the FastAPI Postgres dump from the Docker **platform-crm** stack on that host instead.

@@ -24,6 +24,7 @@ services:
         condition: service_healthy
     environment:
       ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}

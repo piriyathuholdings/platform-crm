@@ -1,6 +1,12 @@
-# Data import
+# Data migration
 
-Restore CRM data from a CSV export bundle (manifest + per-doctype CSV files):
+## FastAPI Postgres (preferred)
+
+Dump and restore the `crm` Postgres database between environments. See [DEPLOY.md](../../DEPLOY.md#import--migrate-crm-data).
+
+## Legacy Frappe CSV import
+
+Restore CRM data from a CSV export bundle (manifest + per-doctype CSV files) — **only** for one-time imports from old Frappe exports, not the current API:
 
 ```bash
 cd fastapi-backend
